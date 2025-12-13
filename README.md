@@ -5,7 +5,6 @@ conducted independently and require data after a successful transaction
 
 ### ACM's Winter of Code, 2025
 ```json 
-// Payload
 {
     "full_name": "Tyler Durden",
     "email": "tylerdurden@fightclub.com"
@@ -14,7 +13,6 @@ conducted independently and require data after a successful transaction
 
 ### AI-Verse Hackathon, 2025
 ```json
-// Payload
 {
     "team_name": "Fight Club",
     "leader_name": "Tyler Durden"
