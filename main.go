@@ -1,29 +1,16 @@
 package main
 
 import (
-	"fmt"
-
-	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/IAmRiteshKoushik/tentacloid/pkg"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	fmt.Println("Hello world")
-}
+	var err error
 
-const (
-	QueueHackathonRegistrations = "ai-hackathon-registrations"
-	QueueWocRegistrations       = "woc-registrations"
-	QueueDebateRegistrations    = "debate-registrations"
-)
-
-var allQueues = []string{
-	QueueDebateRegistrations,
-	QueueWocRegistrations,
-	QueueHackathonRegistrations,
-}
-
-var Rabbit *MsgBroker
-
-type MsgBroker struct {
-	conn *amqp.Connection
+	pkg.Rabbit, err = pkg.NewBroker(viper.GetString("message_broker_url"))
+	if err != nil {
+		return
+	}
+	pkg.Log.Info("[OK]: Message broker initialized successfully")
 }
