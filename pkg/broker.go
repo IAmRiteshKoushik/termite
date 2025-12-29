@@ -118,3 +118,7 @@ func (r *MsgBroker) Close() error {
 
 	return nil
 }
+
+func (r *MsgBroker) Conn() *amqp.Connection {
+	return r.conn
+}
