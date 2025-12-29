@@ -1,5 +1,5 @@
-# Comes from local turso
-data
+# Environment variables
+env.toml
 
 # Comes from build
 tentacloid
