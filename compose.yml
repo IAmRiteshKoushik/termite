@@ -1,0 +1,22 @@
+services:
+
+  # Workflow management with RabbitMQ
+  rabbitmq:
+    image: rabbitmq:4.1.5-management-alpine
+    container_name: anokha-rabbitmq
+    restart: on-failure
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-lib:/var/lib/rabbitmq/
+      - rabbitmq-log:/var/log/rabbitmq/
+
+volumes:
+  rabbitmq-lib:
+    driver: local
+  rabbitmq-log:
+    driver: local
