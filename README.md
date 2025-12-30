@@ -65,6 +65,8 @@ To configure receivers, rename `env.sample.toml` to `env.toml` and populate
 the required details. Don't change the queue name as it is currently hardcoded
 in the codebase. Ideally, it should be read from `env.toml`
 
+Once, everything is configured, type - `make run` in your terminal.
+
 ### Authors
 
 [Ritesh Koushik](https://github.com/IAmRiteshKoushik)
