@@ -6,8 +6,10 @@ conducted independently and require data after a successful transaction
 ### ACM's Winter of Code, 2026
 ```json 
 {
-    "full_name": "Tyler Durden",
+    "firstName": "Tyler",
+    "lastName": "Durden",
     "email": "tylerdurden@fightclub.com"
+    "password": "a$$w0rd"
 }
 ```
 
@@ -43,4 +45,26 @@ conducted independently and require data after a successful transaction
 }
 ```
 
-### Testing Suite (coming soon)
+### Testing Suite
+Make sure to have RabbitMQ up - `docker compose up -d`
+
+1. For testing WoC
+```bash
+bash scripts/insert_woc_data.sh
+```
+
+2. For testing AI-Verse
+```bash
+bash scripts/insert_hack_data.bash
+```
+
+This populates RabbitMQ. If you have receivers listening on the other end, 
+then the dispatch would work.
+
+To configure receivers, rename `env.sample.toml` to `env.toml` and populate 
+the required details. Don't change the queue name as it is currently hardcoded
+in the codebase. Ideally, it should be read from `env.toml`
+
+### Authors
+
+[Ritesh Koushik](https://github.com/IAmRiteshKoushik)
