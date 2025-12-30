@@ -31,7 +31,7 @@ func NewBroker(connStr string) (*MsgBroker, error) {
 	}
 
 	if err := client.connect(); err != nil {
-		Log.Error("[CRASH]: Message broker failed to initialize", err)
+		Log.Error("[BAD]: Message broker failed to initialize", err)
 		return nil, err
 	}
 

@@ -47,7 +47,6 @@ func LoadConfig() error {
 	}
 
 	AppConfig = &config
-	Log.Info("Configuration loaded and validated successfully.")
 	return nil
 }
 
