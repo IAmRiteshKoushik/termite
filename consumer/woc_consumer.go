@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,6 +20,25 @@ func NewWocConsumer(conn *amqp.Connection) *WocConsumer {
 	return &WocConsumer{
 		conn: conn,
 	}
+}
+
+// This consumes the payload extracted from RabbitMQ, marshals it as JSON,
+// and then dispatches it over HTTP.
+func (c *WocConsumer) payloadDispatch(d amqp.Delivery) (bool, error) {
+	var payload WoCPayload
+	if err := json.Unmarshal(d.Body, &payload); err != nil {
+		pkg.Log.Error("Failed to unmarshal message body", err)
+		return false, fmt.Errorf("failed to unmarshal message: %w", err)
+	}
+
+	err := DispatchWoCPayload(payload)
+	if err != nil {
+		// Dispatch failures could be attributed to bad network conditions or
+		// listener failures on the other end. Infinite retry setup needed.
+		pkg.Log.Warn(fmt.Sprintf("Dispatch failed, will retry: %v", err))
+		return false, nil
+	}
+	return true, nil
 }
 
 // Listen starts consuming messages from the woc-registrations queue.
@@ -79,7 +99,7 @@ func (c *WocConsumer) Listen(ctx context.Context) error {
 					// Continue processing
 				}
 
-				success, err := c.processMessage(d)
+				success, err := c.payloadDispatch(d)
 				if err != nil {
 					pkg.Log.Error("Error processing message, will not retry", err)
 					d.Ack(false)
