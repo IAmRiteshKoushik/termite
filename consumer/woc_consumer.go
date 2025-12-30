@@ -10,21 +10,17 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// WocConsumer represents a consumer for the woc-registrations queue.
 type WocConsumer struct {
 	conn *amqp.Connection
 }
 
-// NewWocConsumer creates a new WocConsumer.
 func NewWocConsumer(conn *amqp.Connection) *WocConsumer {
 	return &WocConsumer{
 		conn: conn,
 	}
 }
 
-// This consumes the payload extracted from RabbitMQ, marshals it as JSON,
-// and then dispatches it over HTTP.
-func (c *WocConsumer) payloadDispatch(d amqp.Delivery) (bool, error) {
+func (c *WocConsumer) webhookDispatch(d amqp.Delivery) (bool, error) {
 	var payload WoCPayload
 	if err := json.Unmarshal(d.Body, &payload); err != nil {
 		pkg.Log.Error("Failed to unmarshal message body", err)
@@ -41,7 +37,6 @@ func (c *WocConsumer) payloadDispatch(d amqp.Delivery) (bool, error) {
 	return true, nil
 }
 
-// Listen starts consuming messages from the woc-registrations queue.
 func (c *WocConsumer) Listen(ctx context.Context) error {
 	ch, err := c.conn.Channel()
 	if err != nil {
@@ -99,7 +94,7 @@ func (c *WocConsumer) Listen(ctx context.Context) error {
 					// Continue processing
 				}
 
-				success, err := c.payloadDispatch(d)
+				success, err := c.webhookDispatch(d)
 				if err != nil {
 					pkg.Log.Error("Error processing message, will not retry", err)
 					d.Ack(false)

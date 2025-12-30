@@ -31,6 +31,7 @@ var aiClient = &http.Client{
 	Timeout: time.Second * 10,
 }
 
+// Convert incoming payload into JSON and dispatch to webhook URL
 func DispatchHackathonPayload(payload HackathonPayload) error {
 	pkg.Log.Info(fmt.Sprintf("Dispatching payload for team: %s", payload.TeamName))
 

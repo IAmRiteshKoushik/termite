@@ -20,9 +20,7 @@ func NewAiConsumer(conn *amqp.Connection) *AiConsumer {
 	}
 }
 
-// This consumes the payload extracted from RabbitMQ, marshals it as JSON,
-// and then dispatches it over HTTP.
-func (c *AiConsumer) payloadDispatch(d amqp.Delivery) (bool, error) {
+func (c *AiConsumer) webhookDispatch(d amqp.Delivery) (bool, error) {
 	var payload HackathonPayload
 	if err := json.Unmarshal(d.Body, &payload); err != nil {
 		// Cannot retry this error. Event has to be skipped. If this causes a
@@ -99,7 +97,7 @@ func (c *AiConsumer) Listen(ctx context.Context) error {
 					// Continue processing
 				}
 
-				success, err := c.payloadDispatch(d)
+				success, err := c.webhookDispatch(d)
 				if err != nil {
 					pkg.Log.Error("Error processing message, will not retry", err)
 					d.Ack(false)
