@@ -10,11 +10,9 @@ import (
 const (
 	QueueHackathonRegistrations = "ai-hackathon-registrations"
 	QueueWocRegistrations       = "woc-registrations"
-	QueueDebateRegistrations    = "debate-registrations"
 )
 
 var allQueues = []string{
-	QueueDebateRegistrations,
 	QueueWocRegistrations,
 	QueueHackathonRegistrations,
 }
