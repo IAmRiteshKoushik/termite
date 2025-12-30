@@ -26,10 +26,11 @@ ROUTING_KEY="woc-registrations"
 jq -c '.[]' "$JSON_FILE" | while IFS= read -r payload;
     do
     echo "Publishing payload: $payload"
-    plumber write rabbitmq --address="amqp://guest:guest@localhost:5672/"
-        --exchange="$EXCHANGE"
-        --routing-key="$ROUTING_KEY"
-        --input-data="$payload"
+    if [ -z "$EXCHANGE" ]; then
+        plumber write rabbit --address="amqp://guest:guest@localhost:5672/" --exchange-name="amq.default" --routing-key="$ROUTING_KEY" --input="$payload"
+    else
+        plumber write rabbit --address="amqp://guest:guest@localhost:5672/" --exchange-name="$EXCHANGE" --routing-key="$ROUTING_KEY" --input="$payload"
+    fi
 done
 
 echo "All payloads from $JSON_FILE published successfully to exchange '$EXCHANGE' with routing key '$ROUTING_KEY'."
