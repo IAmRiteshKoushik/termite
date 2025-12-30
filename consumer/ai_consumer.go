@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,7 +20,28 @@ func NewAiConsumer(conn *amqp.Connection) *AiConsumer {
 	}
 }
 
-// Listen starts consuming messages from the ai-hackathon-registrations queue.
+// This consumes the payload extracted from RabbitMQ, marshals it as JSON,
+// and then dispatches it over HTTP.
+func (c *AiConsumer) payloadDispatch(d amqp.Delivery) (bool, error) {
+	var payload HackathonPayload
+	if err := json.Unmarshal(d.Body, &payload); err != nil {
+		// Cannot retry this error. Event has to be skipped. If this causes a
+		// dispute, then it has to be handled manually.
+		pkg.Log.Error("Failed to unmarshal message body", err)
+		return false, fmt.Errorf("failed to unmarshal message: %w", err)
+	}
+
+	err := DispatchHackathonPayload(payload)
+	if err != nil {
+		// Dispatch failures could be attributed to bad network conditions or
+		// listener failures on the other end. Infinite retry setup needed.
+		pkg.Log.Warn(fmt.Sprintf("Dispatch failed, will retry: %v", err))
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (c *AiConsumer) Listen(ctx context.Context) error {
 	ch, err := c.conn.Channel()
 	if err != nil {
@@ -71,13 +93,13 @@ func (c *AiConsumer) Listen(ctx context.Context) error {
 				select {
 				case <-ctx.Done():
 					pkg.Log.Info("Shutdown signal received during message processing. Nacking message.")
-					d.Nack(false, true) // Re-queue the message
+					d.Nack(false, true) // Not acknowledging the message
 					return nil
 				default:
 					// Continue processing
 				}
 
-				success, err := c.processMessage(d)
+				success, err := c.payloadDispatch(d)
 				if err != nil {
 					pkg.Log.Error("Error processing message, will not retry", err)
 					d.Ack(false)
@@ -88,19 +110,19 @@ func (c *AiConsumer) Listen(ctx context.Context) error {
 					pkg.Log.Info(fmt.Sprintf("Acknowledging message: %s", d.MessageId))
 					d.Ack(false)
 					break // Exit retry loop
-				} else {
-					pkg.Log.Info("Retrying in 5 seconds...")
-					// Use a select to avoid blocking the shutdown signal during sleep
-					select {
-					case <-time.After(5 * time.Second):
-						// Continue to next retry
-					case <-ctx.Done():
-						pkg.Log.Info("Shutdown signal received during retry sleep. Nacking message.")
-						d.Nack(false, true) // Re-queue the message
-						return nil
-					}
 				}
-			}
+
+				pkg.Log.Info("Retrying in 5 seconds...")
+
+				select {
+				case <-time.After(5 * time.Second):
+				case <-ctx.Done():
+					pkg.Log.Info("Shutdown signal received during retry sleep. Nacking message.")
+					d.Nack(false, true) // Not acknowledging message.
+					return nil
+				}
+
+			} // end of for
 		}
 	}
 }
