@@ -1,8 +1,8 @@
 package consumer
 
 import (
+	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -21,25 +21,8 @@ func NewWocConsumer(conn *amqp.Connection) *WocConsumer {
 	}
 }
 
-// processMessage simulates a process that can fail and returns a boolean indicating success.
-// In a real application, this function would contain the business logic to process the message.
-func (c *WocConsumer) processMessage(d amqp.Delivery) (bool, error) {
-	pkg.Log.Info(fmt.Sprintf("Processing message: %s", string(d.Body)))
-
-	// Simulate a process that might fail.
-	// For demonstration, we'll use a random number to simulate success or failure.
-	// In a real-world scenario, this would be your actual business logic.
-	if rand.Intn(10) < 7 { // 70% chance of failure
-		pkg.Log.Warn(fmt.Sprintf("Failed to process message: %s. Retrying...", string(d.Body)))
-		return false, nil
-	}
-
-	pkg.Log.Info(fmt.Sprintf("Successfully processed message: %s", string(d.Body)))
-	return true, nil
-}
-
 // Listen starts consuming messages from the woc-registrations queue.
-func (c *WocConsumer) Listen() error {
+func (c *WocConsumer) Listen(ctx context.Context) error {
 	ch, err := c.conn.Channel()
 	if err != nil {
 		return fmt.Errorf("failed to open a channel: %w", err)
@@ -71,38 +54,55 @@ func (c *WocConsumer) Listen() error {
 		return fmt.Errorf("failed to register a consumer: %w", err)
 	}
 
-	forever := make(chan bool)
+	pkg.Log.Info(fmt.Sprintf("[*] Waiting for messages on %s.", q.Name))
 
-	go func() {
-		for d := range msgs {
+	for {
+		select {
+		case <-ctx.Done():
+			pkg.Log.Info("Shutting down WOC consumer...")
+			return nil
+		case d, ok := <-msgs:
+			if !ok {
+				pkg.Log.Info("Message channel closed by RabbitMQ.")
+				return nil
+			}
 			pkg.Log.Info(fmt.Sprintf("Received a message from %s", q.Name))
 
 			for {
+				// Inner loop for retries
+				select {
+				case <-ctx.Done():
+					pkg.Log.Info("Shutdown signal received during message processing. Nacking message.")
+					d.Nack(false, true) // Re-queue the message
+					return nil
+				default:
+					// Continue processing
+				}
+
 				success, err := c.processMessage(d)
 				if err != nil {
 					pkg.Log.Error("Error processing message, will not retry", err)
-					// For critical errors, you might want to move the message to a dead-letter queue
-					// or just acknowledge it to remove it from the queue.
-					// For this example, we'll just acknowledge it.
 					d.Ack(false)
-					break
+					break // Exit retry loop
 				}
 
 				if success {
 					pkg.Log.Info(fmt.Sprintf("Acknowledging message: %s", d.MessageId))
 					d.Ack(false)
-					break // Exit the retry loop
+					break // Exit retry loop
 				} else {
 					pkg.Log.Info("Retrying in 5 seconds...")
-					time.Sleep(5 * time.Second)
+					// Use a select to avoid blocking the shutdown signal during sleep
+					select {
+					case <-time.After(5 * time.Second):
+						// Continue to next retry
+					case <-ctx.Done():
+						pkg.Log.Info("Shutdown signal received during retry sleep. Nacking message.")
+						d.Nack(false, true) // Re-queue the message
+						return nil
+					}
 				}
 			}
 		}
-	}()
-
-	pkg.Log.Info(fmt.Sprintf("[*] Waiting for messages on %s. To exit press CTRL+C", q.Name))
-	<-forever
-
-	return nil
+	}
 }
-
