@@ -1,0 +1,20 @@
+version: '3'
+
+tasks:
+  build:
+    desc: Build the project
+    cmds:
+      - go fmt ./...
+      - go build -o bin/tentacloid
+
+  run:
+    desc: Build and run the project
+    deps:
+      - build
+    cmds:
+      - ./bin/tentacloid
+
+  woc:
+    desc: Insert WOC data
+    cmds:
+      - bash scripts/insert_woc_data.sh
