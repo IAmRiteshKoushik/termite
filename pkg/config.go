@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 type Config struct {
@@ -23,16 +25,14 @@ type Config struct {
 var AppConfig *Config
 
 func LoadConfig() error {
-	viper.SetConfigName("env")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
+	var koa = koanf.New(".")
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err := koa.Load(file.Provider("env.toml"), toml.Parser()); err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := koa.Unmarshal("", &config); err != nil {
 		return fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
