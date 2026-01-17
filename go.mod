@@ -1,4 +1,4 @@
-module github.com/IAmRiteshKoushik/tentacloid
+module github.com/IAmRiteshKoushik/termite
 
 go 1.25.3
 

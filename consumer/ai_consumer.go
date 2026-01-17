@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/IAmRiteshKoushik/tentacloid/pkg"
+	"github.com/IAmRiteshKoushik/termite/pkg"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

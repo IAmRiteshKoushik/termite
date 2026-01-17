@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/IAmRiteshKoushik/tentacloid/pkg"
+	"github.com/IAmRiteshKoushik/termite/pkg"
 )
 
 type WoCPayload struct {

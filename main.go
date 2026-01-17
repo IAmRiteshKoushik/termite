@@ -9,8 +9,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/IAmRiteshKoushik/tentacloid/consumer"
-	"github.com/IAmRiteshKoushik/tentacloid/pkg"
+	"github.com/IAmRiteshKoushik/termite/consumer"
+	"github.com/IAmRiteshKoushik/termite/pkg"
 )
 
 func main() {

@@ -2,7 +2,7 @@
 env.toml
 
 # Comes from build
-tentacloid
+termite
 *.log
 
 # Comes from air
